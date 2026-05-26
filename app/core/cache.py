@@ -5,6 +5,7 @@ from cachetools import TTLCache
 especialidades_cache = TTLCache(maxsize=10, ttl=600)
 parentescos_cache = TTLCache(maxsize=10, ttl=600)
 estados_cita_cache = TTLCache(maxsize=10, ttl=600)
+clinicas_publicas_cache = TTLCache(maxsize=10, ttl=600)
 
 # catalogos por clinica:
 doctores_cache = TTLCache(maxsize=100, ttl=300)

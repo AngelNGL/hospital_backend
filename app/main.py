@@ -7,7 +7,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from app.database import get_db
-from app.routers import auth, catalogos, pacientes, citas, doctores
+from app.routers import auth, catalogos, pacientes, citas, doctores, clinicas
 from app.core.rate_limit import limiter
 
 # Imports para ayudar a SQLAlchemy
@@ -43,6 +43,7 @@ app.include_router(catalogos.router)
 app.include_router(pacientes.router)
 app.include_router(citas.router)
 app.include_router(doctores.router)
+app.include_router(clinicas.router)
 
 @app.get("/")
 def root():
