@@ -1,0 +1,137 @@
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700;800;900&display=swap");
+@import "tailwindcss";
+
+:root {
+  font-family:
+    "Source Sans 3",
+    "Segoe UI",
+    Arial,
+    sans-serif;
+  color: #1f2937;
+  background: #eef5f4;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(238, 245, 244, 0.95), rgba(248, 250, 252, 0.98)),
+    #eef5f4;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* Tema visual hospitalario:
+   Mantiene la logica y clases existentes, pero cambia la app a una paleta
+   mas clinica/formal: verde medico, azul petroleo, gris pizarra y blancos. */
+[class~="bg-gray-100"],
+[class~="bg-slate-100"] {
+  background-color: #eef5f4 !important;
+}
+
+[class~="bg-gray-50"],
+[class~="bg-slate-50"] {
+  background-color: #f7faf9 !important;
+}
+
+[class~="bg-blue-50"],
+[class~="bg-indigo-50"],
+[class~="bg-purple-50"] {
+  background-color: #e7f3f1 !important;
+}
+
+[class~="bg-blue-100"],
+[class~="bg-indigo-100"],
+[class~="bg-purple-100"] {
+  background-color: #d7ece8 !important;
+}
+
+[class~="bg-blue-500"],
+[class~="bg-blue-600"],
+[class~="bg-blue-700"],
+[class~="bg-blue-800"],
+[class~="bg-indigo-700"] {
+  background-color: #0f766e !important;
+}
+
+[class~="hover:bg-blue-700"]:hover,
+[class~="hover:bg-blue-800"]:hover,
+[class~="hover:bg-indigo-800"]:hover {
+  background-color: #115e59 !important;
+}
+
+[class~="disabled:bg-blue-300"]:disabled,
+[class~="disabled:bg-indigo-300"]:disabled {
+  background-color: #9fc9c2 !important;
+}
+
+[class~="text-blue-600"],
+[class~="text-blue-700"],
+[class~="text-indigo-700"],
+[class~="text-indigo-800"],
+[class~="text-indigo-900"],
+[class~="text-purple-700"],
+[class~="text-purple-900"] {
+  color: #0f766e !important;
+}
+
+[class~="text-gray-800"],
+[class~="text-slate-900"] {
+  color: #1f2937 !important;
+}
+
+[class~="text-gray-500"],
+[class~="text-slate-500"],
+[class~="text-slate-400"] {
+  color: #64748b !important;
+}
+
+[class~="border-blue-500"],
+[class~="border-blue-600"],
+[class~="border-indigo-700"],
+[class~="hover:border-blue-500"]:hover,
+[class~="hover:border-indigo-300"]:hover {
+  border-color: #0f766e !important;
+}
+
+[class~="focus:ring-blue-500"]:focus,
+[class~="focus:ring-indigo-200"]:focus {
+  --tw-ring-color: rgba(15, 118, 110, 0.28) !important;
+}
+
+[class~="shadow-xl"],
+[class~="shadow-2xl"],
+[class~="shadow-lg"],
+[class~="shadow-sm"] {
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08) !important;
+}
+
+[class~="rounded-3xl"],
+[class~="rounded-[2rem]"] {
+  border-radius: 1rem !important;
+}
+
+[class~="rounded-2xl"] {
+  border-radius: 0.75rem !important;
+}
+
+[class~="rounded-xl"] {
+  border-radius: 0.625rem !important;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: 0;
+}
