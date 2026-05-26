@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from datetime import date, datetime, time, timedelta
 
 from app.core.rate_limit import limiter
 from app.core.security import get_current_user
+from app.core.permissions import require_any_role
 from app.database import get_db
 from app.models.paciente import Paciente
 from app.models.usuario import Usuario
@@ -15,6 +17,37 @@ router = APIRouter(
     prefix="/pacientes",
     tags=["Pacientes"],
 )
+
+@router.get("")
+@limiter.limit("30/minute")
+def listar_pacientes_clinica(
+        request: Request,
+        db: Session = Depends(get_db),
+        usuario_actual: Usuario = Depends(require_any_role(["admin", "recepcionista"])),
+):
+    pacientes = (
+        db.query(Paciente)
+        .filter(Paciente.id_clinica_tenant == usuario_actual.id_clinica_tenant)
+        .order_by(Paciente.nombre, Paciente.apellido)
+        .all()
+    )
+    return [
+        {
+            "id_paciente": paciente.id_paciente,
+            "id_usuario": paciente.id_usuario,
+            "nombre": paciente.nombre,
+            "apellido": paciente.apellido,
+            "nombre_completo": f"{paciente.nombre} {paciente.apellido}",
+            "sexo": paciente.sexo,
+            "fecha_nacimiento": paciente.fecha_nacimiento,
+            "curp": paciente.curp,
+            "activo": paciente.activo,
+            "fecha_baja": paciente.fecha_baja,
+            "id_parentesco": paciente.id_parentesco,
+            "parentesco": paciente.parentesco.parentesco if paciente.parentesco else None,
+        }
+        for paciente in pacientes
+    ]
 
 @router.get("/me")
 @limiter.limit("30/minute")
@@ -47,6 +80,42 @@ def listar_mis_pacientes(
         }
         for paciente in pacientes
     ]
+
+@router.get("/{id_paciente}")
+@limiter.limit("30/minute")
+def obtener_paciente_por_id(
+        request: Request,
+        id_paciente: str,
+        db: Session = Depends(get_db),
+        usuario_actual: Usuario = Depends(require_any_role(["admin", "recepcionista"])),
+):
+    paciente = (
+        db.query(Paciente)
+        .filter(
+            Paciente.id_paciente == id_paciente,
+            Paciente.id_clinica_tenant == usuario_actual.id_clinica_tenant,
+        )
+        .first()
+    )
+    if paciente is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Paciente no encontrado",
+        )
+    return {
+        "id_paciente": paciente.id_paciente,
+        "id_usuario": paciente.id_usuario,
+        "nombre": paciente.nombre,
+        "apellido": paciente.apellido,
+        "nombre_completo": f"{paciente.nombre} {paciente.apellido}",
+        "sexo": paciente.sexo,
+        "fecha_nacimiento": paciente.fecha_nacimiento,
+        "curp": paciente.curp,
+        "activo": paciente.activo,
+        "fecha_baja": paciente.fecha_baja,
+        "id_parentesco": paciente.id_parentesco,
+        "parentesco": paciente.parentesco.parentesco if paciente.parentesco else None,
+    }
 
 @router.post("")
 @limiter.limit("10/minute")
@@ -220,6 +289,10 @@ def actualizar_estado_paciente(
             detail="Paciente no encontrado",
         )
     paciente.activo = datos.activo
+    if datos.activo is False:
+        paciente.fecha_baja = datetime.now()
+    else:
+        paciente.fecha_baja = None
     try:
         db.commit()
         db.refresh(paciente)

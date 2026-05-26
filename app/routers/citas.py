@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 from app.core.cache import clear_disponibilidad_cache_for_doctor
 from app.core.rate_limit import limiter
 from app.core.security import get_current_user
+from app.core.permissions import require_any_role
 from app.database import get_db
 from app.models.cita import Cita
 from app.models.doctor import Doctor
@@ -29,6 +30,46 @@ def obtener_mensaje_mysql(error):
     if hasattr(error, "orig") and error.orig:
         return str(error.orig)
     return str(error)
+
+@router.get("")
+@limiter.limit("30/minute")
+def listar_citas_clinica(
+        request: Request,
+        db: Session = Depends(get_db),
+        usuario_actual: Usuario = Depends(require_any_role(["admin", "recepcionista"])),
+):
+    citas = (
+        db.query(Cita)
+        .filter(Cita.id_clinica_tenant == usuario_actual.id_clinica_tenant)
+        .order_by(Cita.fecha.desc(), Cita.hora_inicio.desc())
+        .all()
+    )
+    return [
+        {
+            "id_cita": cita.id_cita,
+            "fecha": cita.fecha,
+            "hora_inicio": cita.hora_inicio,
+            "hora_fin": cita.hora_fin,
+            "motivo": cita.motivo,
+            "estado": cita.estado.estado if cita.estado else None,
+            "paciente": {
+                "id_paciente": cita.paciente.id_paciente,
+                "nombre": cita.paciente.nombre,
+                "apellido": cita.paciente.apellido,
+                "nombre_completo": f"{cita.paciente.nombre} {cita.paciente.apellido}",
+            } if cita.paciente else None,
+            "doctor": {
+                "id_doctor": cita.doctor.id_doctor,
+                "nombre": cita.doctor.nombre,
+                "apellido": cita.doctor.apellido,
+                "nombre_completo": f"{cita.doctor.nombre} {cita.doctor.apellido}",
+                "especialidad": cita.doctor.especialidad.especialidad
+                if cita.doctor.especialidad
+                else None,
+            } if cita.doctor else None,
+        }
+        for cita in citas
+    ]
 
 @router.get("/me")
 @limiter.limit("30/minute")
@@ -96,6 +137,54 @@ def listar_mis_citas(
         }
         for cita in citas
     ]
+
+@router.get("/{id_cita}")
+@limiter.limit("30/minute")
+def obtener_cita_por_id(
+        request: Request,
+        id_cita: str,
+        db: Session = Depends(get_db),
+        usuario_actual: Usuario = Depends(require_any_role(["admin", "recepcionista"])),
+):
+    cita = (
+        db.query(Cita)
+        .filter(
+            Cita.id_cita == id_cita,
+            Cita.id_clinica_tenant == usuario_actual.id_clinica_tenant,
+        )
+        .first()
+    )
+    if cita is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cita no encontrada",
+        )
+    return {
+        "id_cita": cita.id_cita,
+        "fecha": cita.fecha,
+        "hora_inicio": cita.hora_inicio,
+        "hora_fin": cita.hora_fin,
+        "motivo": cita.motivo,
+        "estado": cita.estado.estado if cita.estado else None,
+        "paciente": {
+            "id_paciente": cita.paciente.id_paciente,
+            "nombre": cita.paciente.nombre,
+            "apellido": cita.paciente.apellido,
+            "nombre_completo": f"{cita.paciente.nombre} {cita.paciente.apellido}",
+            "curp": cita.paciente.curp,
+            "sexo": cita.paciente.sexo,
+            "fecha_nacimiento": cita.paciente.fecha_nacimiento,
+        } if cita.paciente else None,
+        "doctor": {
+            "id_doctor": cita.doctor.id_doctor,
+            "nombre": cita.doctor.nombre,
+            "apellido": cita.doctor.apellido,
+            "nombre_completo": f"{cita.doctor.nombre} {cita.doctor.apellido}",
+            "especialidad": cita.doctor.especialidad.especialidad
+            if cita.doctor.especialidad
+            else None,
+        } if cita.doctor else None,
+    }
 
 @router.post("")
 @limiter.limit("10/minute")
