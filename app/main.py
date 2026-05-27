@@ -21,7 +21,7 @@ from app.models.horario import HorarioDoctor, BloqueoHorario
 
 app = FastAPI(
     title="Sistema de Citas Médicas",
-    version="1.0.0",
+    version="1.1.0",
 )
 
 app.state.limiter = limiter
