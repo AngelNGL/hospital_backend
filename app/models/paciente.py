@@ -7,11 +7,11 @@ from app.database import Base
 
 
 class Paciente(Base):
-    __tablename__ = "Paciente"
+    __tablename__ = "paciente"
     id_paciente = Column(MySQLUUID, primary_key=True, default=lambda: str(uuid.uuid4()),)
     id_clinica_tenant = Column(
         MySQLUUID,
-        ForeignKey("Clinica.id_clinica_tenant"),
+        ForeignKey("clinica.id_clinica_tenant"),
         nullable=False,
     )
     nombre = Column(String(100), nullable=False)
@@ -22,8 +22,8 @@ class Paciente(Base):
     activo = Column(Boolean, default=True)
     fecha_baja = Column(DateTime, nullable=True)
 
-    id_usuario = Column(MySQLUUID, ForeignKey("Usuario.id_usuario"), nullable=False)
-    id_parentesco = Column(String(12), ForeignKey("Parentesco.id_parentesco"), nullable=False)
+    id_usuario = Column(MySQLUUID, ForeignKey("usuario.id_usuario"), nullable=False)
+    id_parentesco = Column(String(12), ForeignKey("parentesco.id_parentesco"), nullable=False)
 
     parentesco = relationship("Parentesco")
     usuario = relationship("Usuario")

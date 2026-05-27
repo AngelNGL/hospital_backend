@@ -7,41 +7,41 @@ from app.database import Base
 
 
 class Clinica(Base):
-    __tablename__ = "Clinica"
+    __tablename__ = "clinica"
     id_clinica_tenant = Column(MySQLUUID, primary_key=True)
     activo = Column(Boolean, default=True)
     fecha_creacion = Column(DateTime, nullable=False)
     usuarios = relationship("Usuario", back_populates="clinica")
 
 class Rol(Base):
-    __tablename__ = "Roles"
+    __tablename__ = "roles"
     id_rol = Column(String(12), primary_key=True)
     rol = Column(String(20), nullable=False, unique=True)
 
     usuarios = relationship("Usuario", back_populates="rol")
 
 class Usuario(Base):
-    __tablename__ = "Usuario"
+    __tablename__ = "usuario"
     id_usuario = Column(MySQLUUID, primary_key=True, default=lambda: str(uuid.uuid4()),)
     id_clinica_tenant = Column(
         MySQLUUID,
-        ForeignKey("Clinica.id_clinica_tenant"),
+        ForeignKey("clinica.id_clinica_tenant"),
         nullable=False,
     )
     correo = Column(String(100), nullable=False, unique=True)
     telefono = Column(String(20), nullable=False, unique=True)
     password = Column(String(255), nullable=False)
 
-    id_rol = Column(String(12), ForeignKey("Roles.id_rol"), nullable=False)
+    id_rol = Column(String(12), ForeignKey("roles.id_rol"), nullable=False)
     rol = relationship("Rol", back_populates="usuarios")
     clinica = relationship("Clinica", back_populates="usuarios")
 
 class DatosClinica(Base):
-    __tablename__ = "Datos_Clinica"
+    __tablename__ = "datos_clinica"
     id_datos_clinica = Column(MySQLUUID, primary_key=True)
     id_clinica_tenant = Column(
         MySQLUUID,
-        ForeignKey("Clinica.id_clinica_tenant"),
+        ForeignKey("clinica.id_clinica_tenant"),
         nullable=False,
         unique=True,
     )
