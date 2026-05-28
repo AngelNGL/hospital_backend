@@ -33,6 +33,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000", # comun en React/Next, agregar otro si se usa otro en front
         "http://192.168.100.139:3000",
+        "http://localhost:8001",
+        "http://100.73.30.52:8001",
     ],
     allow_credentials=True,
     allow_methods=["*"],
