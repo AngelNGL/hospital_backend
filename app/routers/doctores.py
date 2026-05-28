@@ -32,8 +32,8 @@ def sumar_minutos(hora: time, minutos: int) -> time:
     nueva_hora = base + timedelta(minutes=minutos)
     return nueva_hora.time()
 
-def se_cruzan(inicio_a, fin_a, inicio_b, fin_b) -> bool:
-    return not (fin_a <= inicio_b or inicio_a >= fin_b)
+def se_cruzan(inicio_1, fin_1, inicio_2, fin_2):
+    return inicio_1 < fin_2 and fin_1 > inicio_2
 
 def obtener_mensaje_mysql(error):
     if hasattr(error, "orig") and error.orig:
@@ -844,16 +844,15 @@ def obtener_disponibilidad_doctor(
         .filter(EstadoCita.estado == "cancelada")
         .first()
     )
-    id_cancelada = estado_cancelada.id_estado if estado_cancelada else None
-    citas = (
-        db.query(Cita)
-        .filter(
-            Cita.id_doctor == id_doctor,
-            Cita.id_clinica_tenant == usuario_actual.id_clinica_tenant,
-            Cita.fecha == fecha,
-        )
-        .all()
+    query_citas = db.query(Cita).filter(
+        Cita.id_doctor == id_doctor,
+        Cita.id_clinica_tenant == usuario_actual.id_clinica_tenant,
+        Cita.fecha == fecha,
     )
+    if estado_cancelada is not None:
+        query_citas = query_citas.filter(Cita.id_estado != estado_cancelada.id_estado)
+    citas = query_citas.all()
+
     bloqueos = (
         db.query(BloqueoHorario)
         .filter(
@@ -873,11 +872,11 @@ def obtener_disponibilidad_doctor(
 
             ocupado_por_cita = False
             for cita in citas:
-                if id_cancelada is not None and cita.id_estado == id_cancelada:
-                    continue
                 if se_cruzan(
-                    hora_actual, hora_fin_bloque,
-                    cita.hora_inicio, cita.hora_fin,
+                        hora_actual,
+                        hora_fin_bloque,
+                        cita.hora_inicio,
+                        cita.hora_fin,
                 ):
                     ocupado_por_cita = True
                     break

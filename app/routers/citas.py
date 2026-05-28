@@ -393,7 +393,7 @@ def cancelar_cita(
             db.query(Doctor)
             .filter(
                 Doctor.id_usuario == usuario_actual.id_usuario,
-                Doctor.id_clinica_tenant == usuario_actual.id_clinica_tenantm
+                Doctor.id_clinica_tenant == usuario_actual.id_clinica_tenant,
             )
             .first()
         )
@@ -550,4 +550,80 @@ def reprogramar_cita(
         "hora_fin": cita.hora_fin,
         "estado": cita.estado.estado if cita.estado else None,
         "mensaje": "Cita reprogramada correctamente",
+    }
+
+@router.patch("/{id_cita}/completar")
+@limiter.limit("10/minute")
+def completar_cita(
+    request: Request,
+    id_cita: str,
+    db: Session = Depends(get_db),
+    usuario_actual: Usuario = Depends(
+        require_any_role(["admin", "recepcionista", "doctor"])
+    ),
+):
+    cita = (
+        db.query(Cita)
+        .filter(
+            Cita.id_cita == id_cita,
+            Cita.id_clinica_tenant == usuario_actual.id_clinica_tenant,
+        )
+        .first()
+    )
+    if cita is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cita no encontrada",
+        )
+
+    rol_actual = usuario_actual.rol.rol if usuario_actual.rol else None
+    if rol_actual == "doctor":
+        doctor_actual = (
+            db.query(Doctor)
+            .filter(
+                Doctor.id_usuario == usuario_actual.id_usuario,
+                Doctor.id_clinica_tenant == usuario_actual.id_clinica_tenant,
+            )
+            .first()
+        )
+        if doctor_actual is None or cita.id_doctor != doctor_actual.id_doctor:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Solo puedes completar tus propias citas",
+            )
+
+    estado_completada = (
+        db.query(EstadoCita)
+        .filter(EstadoCita.estado == "completada")
+        .first()
+    )
+    if estado_completada is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No existe el estado completada en la base de datos",
+        )
+
+    if cita.estado and cita.estado.estado == "cancelada":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se puede completar una cita cancelada",
+        )
+    cita.id_estado = estado_completada.id_estado
+    try:
+        db.commit()
+        db.refresh(cita)
+    except (IntegrityError, OperationalError) as error:
+        db.rollback()
+        mensaje = obtener_mensaje_mysql(error)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No se pudo completar la cita: {mensaje}",
+        )
+    return {
+        "id_cita": cita.id_cita,
+        "fecha": cita.fecha,
+        "hora_inicio": cita.hora_inicio,
+        "hora_fin": cita.hora_fin,
+        "estado": cita.estado.estado if cita.estado else None,
+        "mensaje": "Cita marcada como completada correctamente",
     }
