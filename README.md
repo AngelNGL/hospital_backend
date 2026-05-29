@@ -1,3 +1,7 @@
+Realizado por: Angel Gabriel Angulo Martínez, 22760239
+
+---
+
 ### BACKEND HOSPITAL
 
 En la terminal de python, para crear un entorno virtual, dentro del folder de "hospital_backend", corran:
